@@ -62,7 +62,7 @@ export default class Drawer extends Component {
     const drawer = this;
 
     const children = Children.map(drawer.props.children, (child) => {
-      if (!child) { return child; }
+      if (!child.props) { return child; }
       if (child.props.trigger) {
         return drawer._upgradeTrigger.bind(drawer)(child);
       } else if (child.props.target) {
