@@ -3,8 +3,13 @@ import { Component, Children, cloneElement } from 'react';
 export default class Drawer extends Component {
   constructor(props) {
       super(props);
+      const isOpen = !!Children
+        .map(props.children, child => child)
+        .filter(child => child.props && child.props.target)
+        .find(child => child.props.open);
+
       this.state = {
-        isOpen: false,
+        isOpen,
         memoizedTargetHeight: 0
       };
   }
@@ -26,11 +31,7 @@ export default class Drawer extends Component {
 
   _upgradeTarget(target) {
     const drawer = this;
-    const oldRefProp = target.props.ref || (() => {});
-    const ref = (t) => {
-      drawer._targetRef = t;
-      oldRefProp();
-    };
+    const ref = (t) => drawer._targetRef = t;
 
     const oldTargetOnTransitionEnd = target.props.onTransitionEnd || (() => {});
     const onTransitionEnd = () => {
@@ -62,14 +63,13 @@ export default class Drawer extends Component {
     const drawer = this;
 
     const children = Children.map(drawer.props.children, (child) => {
-      if (!child.props) { return child; }
+      if (!child || !child.props) { return child; }
       if (child.props.trigger) {
         return drawer._upgradeTrigger.bind(drawer)(child);
       } else if (child.props.target) {
         return drawer._upgradeTarget.bind(drawer)(child);
-      } else {
-        return child;
       }
+      return child;
     });
 
     const props = { ...drawer.props, open: drawer.state.isOpen, children };
@@ -79,6 +79,5 @@ export default class Drawer extends Component {
       props.onBlur = drawer._close.bind(drawer);
     }
     return <div { ...props } />
-
   }
 }
