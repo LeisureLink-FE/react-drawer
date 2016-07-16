@@ -31,28 +31,40 @@ export default class Drawer extends Component {
   
   _upgradeTarget(target) {
     const drawer = this;
-    const ref = (t) => drawer._targetRef = t;
-
-    const oldTargetOnTransitionEnd = target.props.onTransitionEnd || (() => {});
-    const onTransitionEnd = () => {
-      const height = Number.parseInt(window.getComputedStyle(drawer._targetRef).height, 10);
-      if (height) {
-        drawer.setState({ memoizedTargetHeight: height });
     
+    const ref = (t) => {
+      if(t && t.nodeName && drawer.state.memoizedTargetHeight == 0) {
+        var height = 0;
+        var origPosStyle = t.style.position;
+        t.style.position = 'absolute';
+        t.style.maxHeight = '100vh';
+        setTimeout(() => {
+          height = Number.parseInt(window.getComputedStyle(t).height, 10);
+          if(height) {
+            t.style.maxHeight = 0;
+            setTimeout(() => {
+              t.style.position = origPosStyle;
+              t.style.transition = '.2s max-height linear';
+              setTimeout(() => {
+                drawer.setState({memoizedTargetHeight: height});
+                t.style.opacity = 1;
+              },100);
+            }, 100);
+          }
+        }, 100);
       }
-      oldTargetOnTransitionEnd();
-    }
+    };
     
     const maxHeight = drawer.state.isOpen ? (drawer.state.memoizedTargetHeight || '100vh') : 0;
     
     const style = {
       ...target.props.style,
-      transition: '.25s max-height linear',
       maxHeight,
+      opacity:0,
       overflow: 'hidden'
     };
-    return cloneElement(target, { ref, onTransitionEnd, style }, ...(target.children || []));
     
+    return cloneElement(target, { ref, style }, ...(target.children || []));
     
   }
   
