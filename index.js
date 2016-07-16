@@ -49,7 +49,7 @@ export default class Drawer extends Component {
       ...target.props.style,
       transition: '.25s max-height linear',
       maxHeight,
-      overflow: 'auto'
+      overflow: 'hidden'
     };
     return cloneElement(target, { ref, onTransitionEnd, style }, ...(target.children || []));
     
