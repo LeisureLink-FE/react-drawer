@@ -48,10 +48,10 @@ export default class Drawer extends Component {
               setTimeout(() => {
                 drawer.setState({memoizedTargetHeight: height});
                 t.style.opacity = 1;
-              },100);
-            }, 100);
+              },10);
+            }, 10);
           }
-        }, 100);
+        }, 10);
       }
     };
     
