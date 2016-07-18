@@ -41,10 +41,10 @@ export default class Drawer extends Component {
     
       }
       oldTargetOnTransitionEnd();
-    }
-    
-    const maxHeight = drawer.state.isOpen ? (drawer.state.memoizedTargetHeight || '100vh') : 0;
-    
+    };
+  
+    const maxHeight = drawer.state.isOpen ? (drawer.state.memoizedTargetHeight || '9999px') : 0;
+  
     const style = {
       ...target.props.style,
       transition: '.25s max-height linear',
