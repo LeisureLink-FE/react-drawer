@@ -2,16 +2,16 @@ import { Component, Children, cloneElement } from 'react';
 
 export default class Drawer extends Component {
   constructor(props) {
-      super(props);
-      const isOpen = !!Children
+    super(props);
+    const isOpen = !!Children
         .map(props.children, child => child)
-        .filter(child => child.props && child.props.target)
+        .filter(child => child.props && child.props.id === props.target)
         .find(child => child.props.open);
 
-      this.state = {
-        isOpen,
-        memoizedTargetHeight: 0
-      };
+    this.state = {
+      isOpen,
+      memoizedTargetHeight: 0
+    };
   }
 
   _handleTrigger() {
@@ -25,8 +25,8 @@ export default class Drawer extends Component {
     const onClick = () => {
       boundTriggerHandler();
       oldTriggerOnClick();
-    }
-    return cloneElement(trigger, { onClick }, ...(trigger.children || []))
+    };
+    return cloneElement(trigger, { onClick, trigger:false }, ...(trigger.children || []))
   }
 
   _upgradeTarget(target) {
@@ -40,7 +40,7 @@ export default class Drawer extends Component {
         drawer.setState({ memoizedTargetHeight: height });
       }
       oldTargetOnTransitionEnd();
-    }
+    };
 
     const maxHeight = drawer.state.isOpen ? (drawer.state.memoizedTargetHeight || '100vh') : 0;
 
@@ -51,8 +51,7 @@ export default class Drawer extends Component {
       overflow: 'auto'
     };
 
-    return cloneElement(target, { ref, onTransitionEnd, style }, ...(target.children || []));
-
+    return cloneElement(target, { ref, onTransitionEnd, style, target:false }, ...(target.children || []));
   }
 
   _close() {
@@ -64,9 +63,9 @@ export default class Drawer extends Component {
 
     const children = Children.map(drawer.props.children, (child) => {
       if (!child || !child.props) { return child; }
-      if (child.props.trigger) {
+      if (child.props.id === drawer.props.trigger) {
         return drawer._upgradeTrigger.bind(drawer)(child);
-      } else if (child.props.target) {
+      } else if (child.props.id === drawer.props.target) {
         return drawer._upgradeTarget.bind(drawer)(child);
       }
       return child;
@@ -74,10 +73,12 @@ export default class Drawer extends Component {
 
     const props = { ...drawer.props, open: drawer.state.isOpen, children };
 
+    const { trigger, target, closeOnBlur, ...childProps } = props;
+
     if(drawer.props.closeOnBlur) {
       props.tabIndex=0;
       props.onBlur = drawer._close.bind(drawer);
     }
-    return <div { ...props } />
+    return <div { ...childProps } />
   }
 }
