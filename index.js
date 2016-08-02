@@ -1,6 +1,14 @@
 import { Component, Children, cloneElement } from 'react';
 
 export default class Drawer extends Component {
+  static defautProps() {
+    return {
+      closeOnBlur: false,
+      tabIndex: 0,
+      onBlur: () => {}
+    }
+  }
+
   constructor(props) {
     super(props);
     const isOpen = !!Children
@@ -12,6 +20,12 @@ export default class Drawer extends Component {
       isOpen,
       memoizedTargetHeight: 0
     };
+
+    this._handleTrigger.bind(this);
+    this._upgradeTarget.bind(this);
+    this._upgradeTrigger.bind(this);
+    this.close.bind(this);
+
   }
 
   _handleTrigger() {
@@ -19,30 +33,26 @@ export default class Drawer extends Component {
   }
 
   _upgradeTrigger(trigger) {
-    const drawer = this;
-    const oldTriggerOnClick = trigger.props.onClick || (() => {});
-    const boundTriggerHandler = drawer._handleTrigger.bind(drawer);
     const onClick = () => {
-      boundTriggerHandler();
-      oldTriggerOnClick();
+      this._handleTrigger();
+      (trigger.props.onClick || (() => {}))();
     };
-    return cloneElement(trigger, { onClick, trigger:false }, ...(trigger.children || []))
+    return cloneElement(trigger, { onClick }, ...(trigger.children || []))
   }
 
   _upgradeTarget(target) {
-    const drawer = this;
-    const ref = (t) => drawer._targetRef = t;
+    const ref = (t) => this._targetRef = t;
 
     const oldTargetOnTransitionEnd = target.props.onTransitionEnd || (() => {});
     const onTransitionEnd = () => {
-      const height = Number.parseInt(window.getComputedStyle(drawer._targetRef).height, 10);
+      const height = Number.parseInt(window.getComputedStyle(this._targetRef).height, 10);
       if (height) {
-        drawer.setState({ memoizedTargetHeight: height });
+        this.setState({ memoizedTargetHeight: height });
       }
       oldTargetOnTransitionEnd();
     };
 
-    const maxHeight = drawer.state.isOpen ? (drawer.state.memoizedTargetHeight || '100vh') : 0;
+    const maxHeight = this.state.isOpen ? (this.state.memoizedTargetHeight || '100vh') : 0;
 
     const style = {
       ...target.props.style,
@@ -51,33 +61,31 @@ export default class Drawer extends Component {
       overflow: 'auto'
     };
 
-    return cloneElement(target, { ref, onTransitionEnd, style, target:false }, ...(target.children || []));
+    return cloneElement(target, { ref, onTransitionEnd, style }, ...(target.children || []));
   }
 
-  _close() {
+  close() {
     this.setState({isOpen: false});
   }
 
   render() {
-    const drawer = this;
-
-    const children = Children.map(drawer.props.children, (child) => {
+    const children = Children.map(this.props.children, (child) => {
       if (!child || !child.props) { return child; }
-      if (child.props.id === drawer.props.trigger) {
-        return drawer._upgradeTrigger.bind(drawer)(child);
-      } else if (child.props.id === drawer.props.target) {
-        return drawer._upgradeTarget.bind(drawer)(child);
+      if (child.props.id === this.props.trigger) {
+        return this._upgradeTrigger(child);
+      } else if (child.props.id === this.props.target) {
+        return this._upgradeTarget(child);
       }
       return child;
     });
 
-    const props = { ...drawer.props, open: drawer.state.isOpen, children };
+    const props = { ...this.props, open: this.state.isOpen, children };
 
-    const { trigger, target, closeOnBlur, ...childProps } = props;
+    const { closeOnBlur, target, trigger, ...childProps } = props;
 
-    if(drawer.props.closeOnBlur) {
-      props.tabIndex=0;
-      props.onBlur = drawer._close.bind(drawer);
+    if(closeOnBlur) {
+      childProps.tabIndex=0;
+      childProps.onBlur = this.close.bind(this); //Doesn't seem like I should need to bind but...
     }
     return <div { ...childProps } />
   }
