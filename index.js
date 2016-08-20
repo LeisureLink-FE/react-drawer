@@ -1,12 +1,10 @@
 import { Component, Children, cloneElement } from 'react';
 
 export default class Drawer extends Component {
-  static defautProps() {
-    return {
-      closeOnBlur: false,
-      tabIndex: 0,
-      onBlur: () => {}
-    }
+  static defautProps = {
+    closeOnBlur: false,
+    tabIndex: 0,
+    onBlur: () => {}
   }
 
   constructor(props) {
@@ -20,27 +18,21 @@ export default class Drawer extends Component {
       isOpen,
       memoizedTargetHeight: 0
     };
-
-    this._handleTrigger.bind(this);
-    this._upgradeTarget.bind(this);
-    this._upgradeTrigger.bind(this);
-    this.close.bind(this);
-
   }
 
-  _handleTrigger() {
+  _handleTrigger = () => {
     this.setState({ isOpen: !this.state.isOpen });
-  }
+  };
 
-  _upgradeTrigger(trigger) {
+  _upgradeTrigger = (trigger) => {
     const onClick = () => {
       this._handleTrigger();
       (trigger.props.onClick || (() => {}))();
     };
     return cloneElement(trigger, { onClick }, ...(trigger.children || []))
-  }
+  };
 
-  _upgradeTarget(target) {
+  _upgradeTarget = (target) => {
     const ref = (t) => this._targetRef = t;
 
     const oldTargetOnTransitionEnd = target.props.onTransitionEnd || (() => {});
@@ -51,9 +43,7 @@ export default class Drawer extends Component {
       }
       oldTargetOnTransitionEnd();
     };
-
     const maxHeight = this.state.isOpen ? (this.state.memoizedTargetHeight || '100vh') : 0;
-
     const style = {
       ...target.props.style,
       transition: '.25s max-height linear',
@@ -62,11 +52,11 @@ export default class Drawer extends Component {
     };
 
     return cloneElement(target, { ref, onTransitionEnd, style }, ...(target.children || []));
-  }
+  };
 
-  close() {
+  close = () => {
     this.setState({isOpen: false});
-  }
+  };
 
   render() {
     const children = Children.map(this.props.children, (child) => {
@@ -81,12 +71,21 @@ export default class Drawer extends Component {
 
     const props = { ...this.props, open: this.state.isOpen, children };
 
-    const { closeOnBlur, target, trigger, ...childProps } = props;
-
+    const { closeOnBlur, onBlur=()=>{}, target, trigger, ...childProps } = props;
     if(closeOnBlur) {
       childProps.tabIndex=0;
-      childProps.onBlur = this.close.bind(this); //Doesn't seem like I should need to bind but...
     }
-    return <div { ...childProps } />
+    return (
+      <div
+          onBlur={(e) => {
+            //Not really sure why, but some links don't follow w/o the setTimeout
+            setTimeout(() => {
+              closeOnBlur && this.close();
+              onBlur(e);
+            }, 1);
+          }}
+          { ...childProps }
+      />
+    );
   }
 }
